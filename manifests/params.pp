@@ -1,5 +1,5 @@
 # Add something intelligent
-class users::params(
+class users::params (
 
   # secrets (eYAML)
   Optional[
@@ -25,11 +25,12 @@ class users::params(
         groups => Optional[
           Array[String, 1]
         ],
-        managehome => Boolean,
-        home       => Optional[String],
-        password   => Optional[String[0, default]],
-        present    => Boolean,
-        ssh        => Optional[
+        managehome     => Boolean,
+        home           => Optional[String],
+        managepassword => Boolean,
+        password       => Optional[String[0, default]],
+        present        => Boolean,
+        ssh            => Optional[
           Struct[{
             key       => String[1, default],
             key_label => String[1, default],

@@ -1,15 +1,14 @@
 # Users and group management
-class users
-  (
+class users (
 ) inherits ::users::params {
 
   contain ::users::install
   contain ::users::config
-  
+
   if $::users::accounts {
 
     $::users::accounts.each |$username, $userdata| {
-      
+
       # Manage the groups associated to the user, if any
       if $userdata['groups'] {
         users::groups::manage { $username:

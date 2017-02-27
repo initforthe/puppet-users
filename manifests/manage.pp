@@ -1,18 +1,18 @@
 # Manages an user, his home and files
-define users::manage
-  (
+define users::manage (
   Struct[{
     authorized_keys => Optional[
       Tuple[String, default]
     ],
-    groups => Optional[
+    groups         => Optional[
       Array[String, 1]
     ],
-    managehome => Boolean,
-    home       => Optional[String],
-    password   => Optional[String[0, default]],
-    present    => Boolean,
-    ssh        => Optional[
+    managehome     => Boolean,
+    home           => Optional[String],
+    managepassword => Boolean,
+    password       => Optional[String[0, default]],
+    present        => Boolean,
+    ssh            => Optional[
       Struct[{
         key       => String[1, default],
         key_label => String[1, default],
@@ -20,7 +20,7 @@ define users::manage
       }]
     ],
   }] $userdata
-){
+) {
   File {
     group => $name,
     mode  => '0700',
@@ -33,19 +33,26 @@ define users::manage
     $home = "/home/${name}"
   }
 
-  user { $name:
-    ensure   => $userdata['present'] ? {
-      false => absent,
-      true  => present,
-    },
-    password => empty($userdata['password']) ? {
+  $ensure_user = $userdata['present'] ? {
+    false => absent,
+    true  => present,
+  }
+
+  $user_password = $userdata['managepassword'] ? {
+    true  => empty($userdata['password']) ? {
       false => $userdata['password'],
       true  => '',
     },
+    false => undef,
+  }
+
+  user { $name:
+    ensure   => $ensure_user,
+    password => $user_password,
     shell    => '/bin/bash',
     groups   => empty($userdata['groups']) ? {
-      false  => $userdata['groups'],
-      true   => [],
+      false => $userdata['groups'],
+      true  => [],
     },
     home     => $home,
     require  => Package[[keys($::users::mandatory_dependencies)], [keys($::users::extra_dependencies)]],
@@ -53,7 +60,7 @@ define users::manage
 
   if $userdata['present'] and $userdata['managehome'] {
 
-      file { "${home}":
+      file { $home:
         ensure  => directory,
         mode    => '0755',
         owner   => $name,
@@ -63,11 +70,11 @@ define users::manage
       file { "${home}/.ssh":
         ensure  => directory,
         owner   => $name,
-        require => File["${home}"],
+        require => File[$home],
       }
 
       # Manage SSH keys
-      $ssh_public_key = try_get_value($userdata, "ssh/key")
+      $ssh_public_key = try_get_value($userdata, 'ssh/key')
       $ssh_private_key = try_get_value($::users::secrets, "${name}/ssh/private_key")
 
       if !empty($ssh_public_key) {
@@ -103,7 +110,7 @@ define users::manage
 
   else {
 
-    file { "${home}":
+    file { $home:
       ensure  => absent,
       force   => true,
       require => User[$name],
