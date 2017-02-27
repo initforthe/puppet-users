@@ -9,6 +9,7 @@ define users::manage
       Array[String, 1]
     ],
     managehome => Boolean,
+    home       => Optional[String, default],
     password   => Optional[String[0, default]],
     present    => Boolean,
     ssh        => Optional[
@@ -26,6 +27,12 @@ define users::manage
     owner => $name,
   }
 
+  if $userdata['home'] {
+    $home = $userdata['home']
+  } else {
+    $home = "/home/${name}"
+  }
+
   user { $name:
     ensure   => $userdata['present'] ? {
       false => absent,
@@ -40,36 +47,36 @@ define users::manage
       false  => $userdata['groups'],
       true   => [],
     },
-    home     => "/home/${name}",
+    home     => $home,
     require  => Package[[keys($::users::mandatory_dependencies)], [keys($::users::extra_dependencies)]],
   }
 
   if $userdata['present'] and $userdata['managehome'] {
-      
-      file { "/home/${name}":
+
+      file { "${home}":
         ensure  => directory,
         mode    => '0755',
         owner   => $name,
         require => User[$name],
       }
 
-      file { "/home/${name}/.ssh":
+      file { "${home}/.ssh":
         ensure  => directory,
         owner   => $name,
-        require => File["/home/${name}"],
+        require => File["${home}"],
       }
-      
+
       # Manage SSH keys
       $ssh_public_key = try_get_value($userdata, "ssh/key")
       $ssh_private_key = try_get_value($::users::secrets, "${name}/ssh/private_key")
-      
+
       if !empty($ssh_public_key) {
         File{ "${name}_ssh_public_key":
-	  content => $ssh_public_key,
+          content => $ssh_public_key,
           group   => $name,
           mode    => '0655',
           owner   => $name,
-          path    => "/home/${name}/.ssh/${name}.pub",
+          path    => "${home}/.ssh/${name}.pub",
         }
       }
 
@@ -79,24 +86,24 @@ define users::manage
           group   => $name,
           mode    => '0600',
           owner   => $name,
-          path    => "/home/${name}/.ssh/${name}"
+          path    => "${home}/.ssh/${name}"
         }
       }
 
-      # Manage authorized_keys 
+      # Manage authorized_keys
       if ! empty($userdata['authorized_keys']) {
         file { "/home/${name}/.ssh/authorized_keys":
           ensure  => present,
-          content => epp('users/authorized_keys', {'authorized_users' => $userdata['authorized_keys'    ]}),
+          content => epp('users/authorized_keys', {'authorized_users' => $userdata['authorized_keys']}),
           owner   => $name,
-          require => File["/home/${name}/.ssh"],
+          require => File["${home}/.ssh"],
         }
       }
     }
-  
+
   else {
-    
-    file { "/home/${name}":
+
+    file { "${home}":
       ensure  => absent,
       force   => true,
       require => User[$name],
