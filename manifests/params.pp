@@ -25,6 +25,7 @@ class users::params(
         groups => Optional[
           Array[String, 1]
         ],
+        home       => Optional[String]
         managehome => Boolean,
         password   => Optional[String[0, default]],
         present    => Boolean,

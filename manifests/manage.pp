@@ -9,7 +9,7 @@ define users::manage
       Array[String, 1]
     ],
     managehome => Boolean,
-    home       => Optional[String, default],
+    home       => Optional[String],
     password   => Optional[String[0, default]],
     present    => Boolean,
     ssh        => Optional[
