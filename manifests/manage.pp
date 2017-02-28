@@ -102,7 +102,7 @@ define users::manage (
 
     # Manage authorized_keys
     if ! empty($userdata['authorized_keys']) {
-      file { "/home/${name}/.ssh/authorized_keys":
+      file { "${home}/.ssh/authorized_keys":
         ensure  => present,
         content => epp('users/authorized_keys', {'authorized_users' => $userdata['authorized_keys']}),
         owner   => $name,
