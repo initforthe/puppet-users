@@ -77,11 +77,12 @@ define users::manage (
 
     # Manage SSH keys
     $ssh_public_key = try_get_value($userdata, 'ssh/key')
+    $ssh_public_key_type = try_get_value($userdata, 'ssh/key_type')
     $ssh_private_key = try_get_value($::users::secrets, "${name}/ssh/private_key")
 
     if !empty($ssh_public_key) {
       File{ "${name}_ssh_public_key":
-        content => $ssh_public_key,
+        content => "${ssh_public_key_type} ${ssh_public_key}",
         group   => $name,
         mode    => '0655',
         owner   => $name,
