@@ -49,7 +49,7 @@ class users::params (
   ] $extra_dependencies = {},
 
   $mandatory_dependencies = {
-    libshadow => 'gem',
+    'ruby-shadow' => 'gem',
     libuser   => 'apt',
     sudo      => 'apt',
   }
