@@ -41,21 +41,34 @@ define users::manage (
   $user_password = $userdata['managepassword'] ? {
     true  => empty($userdata['password']) ? {
       false => $userdata['password'],
-      true  => '',
+      true  => '!!',
     },
     false => undef,
   }
 
-  user { $name:
-    ensure   => $ensure_user,
-    password => $user_password,
-    shell    => '/bin/bash',
-    groups   => empty($userdata['groups']) ? {
-      false => $userdata['groups'],
-      true  => [],
-    },
-    home     => $home,
-    require  => Package[[keys($::users::mandatory_dependencies)], [keys($::users::extra_dependencies)]],
+  if (! empty($user_password)) {
+    user { $name:
+      ensure   => $ensure_user,
+      password => str2saltedsha512($user_password),
+      shell    => '/bin/bash',
+      groups   => empty($userdata['groups']) ? {
+        false => $userdata['groups'],
+        true  => [],
+      },
+      home     => $home,
+      require  => Package[[keys($::users::mandatory_dependencies)], [keys($::users::extra_dependencies)]],
+    }
+  } else {
+    user { $name:
+      ensure  => $ensure_user,
+      shell   => '/bin/bash',
+      groups  => empty($userdata['groups']) ? {
+        false => $userdata['groups'],
+        true  => [],
+      },
+      home    => $home,
+      require => Package[[keys($::users::mandatory_dependencies)], [keys($::users::extra_dependencies)]],
+    }
   }
 
   if $userdata['present'] and $userdata['managehome'] {
